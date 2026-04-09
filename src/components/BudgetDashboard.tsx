@@ -11,6 +11,7 @@ import NotificationCenter from "./NotificationCenter";
 import { Plus, Loader2, AlertCircle, PieChart, X } from "lucide-react";
 import { registerServiceWorker } from "../services/serviceWorker";
 import { requestAndSubscribePush } from "../services/push.service";
+import { Bell, BellOff } from "lucide-react";
 
 export default function BudgetDashboard() {
   const {
@@ -30,14 +31,29 @@ export default function BudgetDashboard() {
   const [editItem, setEditItem] = useState<BudgetItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BudgetItem | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
+  const [showNotifBanner, setShowNotifBanner] = useState(false);
 
   useEffect(() => {
     fetchItems();
-    // Register service worker and request push permission on first load
+    // Register service worker
     registerServiceWorker().then((reg) => {
-      if (reg) requestAndSubscribePush();
+      if (!reg) return;
+      const supportsNotif = "Notification" in window && "PushManager" in window;
+      if (!supportsNotif) return;
+      if (Notification.permission === "granted") {
+        // Already granted — silently re-subscribe
+        requestAndSubscribePush();
+      } else if (Notification.permission === "default") {
+        // Not yet asked — show banner so user can trigger via gesture (required on mobile)
+        setShowNotifBanner(true);
+      }
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const handleEnableNotifications = async () => {
+    setShowNotifBanner(false);
+    await requestAndSubscribePush();
+  };
 
   const filteredItems = items.filter((i) => i.category === activeTab);
   const damHoiCount = items.filter((i) => i.category === "dam-hoi").length;
@@ -78,7 +94,7 @@ export default function BudgetDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f5f7]">
+    <div className="min-h-dvh bg-[#f5f5f7]">
       {/* Top nav bar */}
       <header className="bg-white/80 backdrop-blur-xl border-b border-zinc-200/60 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
@@ -107,6 +123,31 @@ export default function BudgetDashboard() {
           </div>
         </div>
       </header>
+
+      {/* Notification permission banner */}
+      {showNotifBanner && (
+        <div className="bg-blue-50 border-b border-blue-100 px-4 py-2.5 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-sm text-blue-800">
+            <Bell size={15} className="shrink-0 text-blue-500" />
+            <span>Bật thông báo để nhắc nhở deadline thanh toán</span>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleEnableNotifications}
+              className="px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-lg hover:bg-blue-700 transition-colors cursor-pointer"
+            >
+              Bật
+            </button>
+            <button
+              onClick={() => setShowNotifBanner(false)}
+              className="p-1 text-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
+              aria-label="Đóng"
+            >
+              <BellOff size={15} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
         {/* Summary cards */}

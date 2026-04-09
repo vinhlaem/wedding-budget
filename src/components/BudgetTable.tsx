@@ -1,4 +1,5 @@
 ﻿import { useRef, useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { useBudgetStore } from "../store/budgetStore";
 import { useNotificationStore } from "../store/notificationStore";
 import type { BudgetItem, BudgetStatus } from "../types/budget";
@@ -53,20 +54,47 @@ function StatusPicker({
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState<"menu" | "deposit">("menu");
   const [depositInput, setDepositInput] = useState("");
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 });
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Close on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
+      if (
+        ref.current &&
+        !ref.current.contains(e.target as Node) &&
+        btnRef.current &&
+        !btnRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
         setStep("menu");
       }
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Recalculate dropdown position on scroll/resize while open
+  useEffect(() => {
+    if (!open) return;
+    const update = () => {
+      if (!btnRef.current) return;
+      const r = btnRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: r.bottom + 4,
+        right: window.innerWidth - r.right,
+      });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
   }, [open]);
 
   // Focus input when switching to deposit step
@@ -100,9 +128,17 @@ function StatusPicker({
   const isValid = depositNum > 0 && depositNum <= estimatedCost;
 
   return (
-    <div className="relative" ref={ref}>
+    <div ref={ref}>
       <button
+        ref={btnRef}
         onClick={() => {
+          if (!open && btnRef.current) {
+            const r = btnRef.current.getBoundingClientRect();
+            setDropdownPos({
+              top: r.bottom + 4,
+              right: window.innerWidth - r.right,
+            });
+          }
           setOpen((v) => !v);
           setStep("menu");
         }}
@@ -112,77 +148,99 @@ function StatusPicker({
         <RefreshCw size={14} />
       </button>
 
-      {open && step === "menu" && (
-        <div className="absolute right-0 top-full mt-1 w-48 bg-white rounded-xl border border-zinc-200 shadow-xl z-50 py-1 animate-fade-in">
-          {STATUS_ORDER.map((s) => (
-            <button
-              key={s}
-              onClick={() => handleMenuSelect(s)}
-              className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${STATUS_OPTION_CLS[s]}`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_CLS[s]}`}
-              />
-              <span className="flex-1 text-left">{STATUS_LABELS[s]}</span>
-              {current === s && (
-                <Check size={12} className="shrink-0 opacity-60" />
-              )}
-            </button>
-          ))}
-        </div>
-      )}
-
-      {open && step === "deposit" && (
-        <div className="absolute right-0 top-full mt-1 w-60 bg-white rounded-xl border border-zinc-200 shadow-xl z-50 p-3 animate-fade-in">
-          {/* Header */}
-          <div className="flex items-center gap-2 mb-2.5">
-            <button
-              onClick={() => setStep("menu")}
-              className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
-            >
-              <ArrowLeft size={13} />
-            </button>
-            <div>
-              <p className="text-xs font-semibold text-amber-700">
-                Đã cọc một phần
-              </p>
-              <p className="text-[10px] text-zinc-400">
-                Dự toán: {formatCurrency(estimatedCost)}
-              </p>
-            </div>
-          </div>
-
-          {/* Input */}
-          <input
-            ref={inputRef}
-            type="text"
-            inputMode="numeric"
-            value={depositInput}
-            onChange={(e) =>
-              setDepositInput(
-                formatNumber(parseInputNumber(e.target.value)) || "",
-              )
-            }
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && isValid) handleDepositConfirm();
+      {open &&
+        step === "menu" &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: dropdownPos.top,
+              right: dropdownPos.right,
+              zIndex: 9999,
             }}
-            placeholder="Số tiền đã cọc..."
-            className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-800 placeholder-zinc-300 focus:outline-none focus:border-amber-400 focus:bg-white transition-all"
-          />
-          {depositNum > estimatedCost && (
-            <p className="text-[10px] text-red-500 mt-1">Vượt quá dự toán</p>
-          )}
-
-          {/* Confirm */}
-          <button
-            onClick={handleDepositConfirm}
-            disabled={!isValid}
-            className="mt-2.5 w-full py-2 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            className="w-48 bg-white rounded-xl border border-zinc-200 shadow-xl py-1 animate-fade-in"
           >
-            Xác nhận
-          </button>
-        </div>
-      )}
+            {STATUS_ORDER.map((s) => (
+              <button
+                key={s}
+                onClick={() => handleMenuSelect(s)}
+                className={`w-full flex items-center gap-2 px-3 py-2 text-xs font-medium transition-colors cursor-pointer ${STATUS_OPTION_CLS[s]}`}
+              >
+                <span
+                  className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT_CLS[s]}`}
+                />
+                <span className="flex-1 text-left">{STATUS_LABELS[s]}</span>
+                {current === s && (
+                  <Check size={12} className="shrink-0 opacity-60" />
+                )}
+              </button>
+            ))}
+          </div>,
+          document.body,
+        )}
+
+      {open &&
+        step === "deposit" &&
+        createPortal(
+          <div
+            style={{
+              position: "fixed",
+              top: dropdownPos.top,
+              right: dropdownPos.right,
+              zIndex: 9999,
+            }}
+            className="w-60 bg-white rounded-xl border border-zinc-200 shadow-xl p-3 animate-fade-in"
+          >
+            {/* Header */}
+            <div className="flex items-center gap-2 mb-2.5">
+              <button
+                onClick={() => setStep("menu")}
+                className="p-1 rounded-lg text-zinc-400 hover:text-zinc-600 hover:bg-zinc-100 transition-colors cursor-pointer"
+              >
+                <ArrowLeft size={13} />
+              </button>
+              <div>
+                <p className="text-xs font-semibold text-amber-700">
+                  Đã cọc một phần
+                </p>
+                <p className="text-[10px] text-zinc-400">
+                  Dự toán: {formatCurrency(estimatedCost)}
+                </p>
+              </div>
+            </div>
+
+            {/* Input */}
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="numeric"
+              value={depositInput}
+              onChange={(e) =>
+                setDepositInput(
+                  formatNumber(parseInputNumber(e.target.value)) || "",
+                )
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && isValid) handleDepositConfirm();
+              }}
+              placeholder="Số tiền đã cọc..."
+              className="w-full px-3 py-2 bg-zinc-50 border border-zinc-200 rounded-lg text-xs text-zinc-800 placeholder-zinc-300 focus:outline-none focus:border-amber-400 focus:bg-white transition-all"
+            />
+            {depositNum > estimatedCost && (
+              <p className="text-[10px] text-red-500 mt-1">Vượt quá dự toán</p>
+            )}
+
+            {/* Confirm */}
+            <button
+              onClick={handleDepositConfirm}
+              disabled={!isValid}
+              className="mt-2.5 w-full py-2 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+            >
+              Xác nhận
+            </button>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
