@@ -28,7 +28,6 @@ export async function requestAndSubscribePush(): Promise<boolean> {
     publicKey = await pushApi.getVapidKey();
   } catch {
     console.warn("[push] Could not fetch VAPID key");
-    alert("Không thể kích hoạt thông báo: lỗi kết nối máy chủ");
     return false;
   }
 

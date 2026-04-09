@@ -39,13 +39,11 @@ export default function BudgetDashboard() {
     registerServiceWorker().then((reg) => {
       if (!reg) {
         console.warn("[SW] Service worker registration failed");
-        alert("Không thể kích hoạt thông báo: trình duyệt không hỗ trợ 1");
         return;
       }
       const supportsNotif = "Notification" in window && "PushManager" in window;
       if (!supportsNotif) {
         console.warn("[push] Notifications not supported");
-        alert("Không thể kích hoạt thông báo: trình duyệt không hỗ trợ 2");
         return;
       }
       if (Notification.permission === "granted") {
@@ -104,7 +102,7 @@ export default function BudgetDashboard() {
   return (
     <div className="min-h-dvh bg-[#f5f5f7]">
       {/* Top nav bar */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-zinc-200/60 sticky top-0 z-30">
+      <header className="bg-white/80 backdrop-blur-xl border-b border-zinc-200/60 sticky top-0 z-30" style={{ paddingTop: "env(safe-area-inset-top)" }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center">
