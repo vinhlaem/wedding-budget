@@ -85,7 +85,7 @@ function StatusPicker({
       const r = btnRef.current.getBoundingClientRect();
       setDropdownPos({
         top: r.bottom + 4,
-        right: window.innerWidth - r.right,
+        right: window.innerWidth - r.right - 80,
       });
     };
     update();
