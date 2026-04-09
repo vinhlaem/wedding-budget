@@ -37,9 +37,17 @@ export default function BudgetDashboard() {
     fetchItems();
     // Register service worker
     registerServiceWorker().then((reg) => {
-      if (!reg) return;
+      if (!reg) {
+        console.warn("[SW] Service worker registration failed");
+        alert("Không thể kích hoạt thông báo: trình duyệt không hỗ trợ 1");
+        return;
+      }
       const supportsNotif = "Notification" in window && "PushManager" in window;
-      if (!supportsNotif) return;
+      if (!supportsNotif) {
+        console.warn("[push] Notifications not supported");
+        alert("Không thể kích hoạt thông báo: trình duyệt không hỗ trợ 2");
+        return;
+      }
       if (Notification.permission === "granted") {
         // Already granted — silently re-subscribe
         requestAndSubscribePush();

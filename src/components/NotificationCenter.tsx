@@ -1,6 +1,7 @@
 // src/components/NotificationCenter.tsx
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { useNotificationStore } from "../store/notificationStore";
 import type { AppNotification } from "../types/budget";
@@ -59,6 +60,82 @@ function NotifItem({ notif, onRead, onNavigate }: NotifItemProps) {
         </div>
       </div>
     </div>
+  );
+}
+
+interface NotifPanelProps {
+  notifications: AppNotification[];
+  unreadCount: number;
+  loading: boolean;
+  onClose: () => void;
+  onMarkRead: (id: string) => void;
+  onMarkAllRead: () => void;
+  onNavigate: (deadline: string) => void;
+}
+
+function NotifPanel({
+  notifications,
+  unreadCount,
+  loading,
+  onClose,
+  onMarkRead,
+  onMarkAllRead,
+  onNavigate,
+}: NotifPanelProps) {
+  return (
+    <>
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
+        <span className="text-sm font-bold text-zinc-900">Thông báo</span>
+        <div className="flex items-center gap-1">
+          {unreadCount > 0 && (
+            <button
+              onClick={onMarkAllRead}
+              className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+              title="Đánh dấu tất cả đã đọc"
+            >
+              <CheckCheck size={12} />
+              Đọc tất cả
+            </button>
+          )}
+          <button
+            onClick={onClose}
+            className="p-1 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
+          >
+            <X size={14} className="text-zinc-400" />
+          </button>
+        </div>
+      </div>
+
+      {/* List */}
+      <div className="max-h-[60dvh] md:max-h-[380px] overflow-y-auto">
+        {loading && notifications.length === 0 ? (
+          <div className="py-10 text-center text-sm text-zinc-400">
+            Đang tải…
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="py-10 text-center">
+            <Check size={28} className="mx-auto text-zinc-300 mb-2" />
+            <p className="text-sm text-zinc-400">Không có thông báo nào</p>
+          </div>
+        ) : (
+          notifications.map((n) => (
+            <NotifItem
+              key={n._id}
+              notif={n}
+              onRead={onMarkRead}
+              onNavigate={onNavigate}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Safe area padding for iPhone home indicator */}
+      <div
+        className="h-safe-bottom md:hidden"
+        style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
+      />
+    </>
   );
 }
 
@@ -133,56 +210,49 @@ export default function NotificationCenter() {
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Desktop dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-zinc-200/80 z-50 animate-fade-in overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-zinc-100">
-            <span className="text-sm font-bold text-zinc-900">Thông báo</span>
-            <div className="flex items-center gap-1">
-              {unreadCount > 0 && (
-                <button
-                  onClick={() => markAllRead()}
-                  className="flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                  title="Đánh dấu tất cả đã đọc"
-                >
-                  <CheckCheck size={12} />
-                  Đọc tất cả
-                </button>
-              )}
-              <button
-                onClick={() => setOpen(false)}
-                className="p-1 rounded-lg hover:bg-zinc-100 transition-colors cursor-pointer"
-              >
-                <X size={14} className="text-zinc-400" />
-              </button>
-            </div>
-          </div>
-
-          {/* List */}
-          <div className="max-h-[380px] overflow-y-auto">
-            {loading && notifications.length === 0 ? (
-              <div className="py-10 text-center text-sm text-zinc-400">
-                Đang tải…
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="py-10 text-center">
-                <Check size={28} className="mx-auto text-zinc-300 mb-2" />
-                <p className="text-sm text-zinc-400">Không có thông báo nào</p>
-              </div>
-            ) : (
-              notifications.map((n) => (
-                <NotifItem
-                  key={n._id}
-                  notif={n}
-                  onRead={markRead}
-                  onNavigate={handleNavigate}
-                />
-              ))
-            )}
-          </div>
+        <div className="hidden md:block absolute right-0 top-full mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-zinc-200/80 z-50 animate-fade-in overflow-hidden">
+          <NotifPanel
+            notifications={notifications}
+            unreadCount={unreadCount}
+            loading={loading}
+            onClose={() => setOpen(false)}
+            onMarkRead={markRead}
+            onMarkAllRead={markAllRead}
+            onNavigate={handleNavigate}
+          />
         </div>
       )}
+
+      {/* Mobile drawer via portal */}
+      {open &&
+        createPortal(
+          <div className="md:hidden">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 bg-black/30 z-50 animate-fade-in"
+              onClick={() => setOpen(false)}
+            />
+            {/* Bottom sheet */}
+            <div className="fixed inset-x-0 bottom-0 z-50 bg-white rounded-t-2xl shadow-2xl animate-slide-up overflow-hidden">
+              {/* Drag handle */}
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 rounded-full bg-zinc-200" />
+              </div>
+              <NotifPanel
+                notifications={notifications}
+                unreadCount={unreadCount}
+                loading={loading}
+                onClose={() => setOpen(false)}
+                onMarkRead={markRead}
+                onMarkAllRead={markAllRead}
+                onNavigate={handleNavigate}
+              />
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
