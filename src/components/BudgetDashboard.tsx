@@ -44,11 +44,17 @@ export default function BudgetDashboard() {
       const supportsNotif = "Notification" in window && "PushManager" in window;
       if (!supportsNotif) {
         console.warn("[push] Notifications not supported");
+        alert(
+          "Trình duyệt của bạn không hỗ trợ thông báo. Vui lòng sử dụng trình duyệt hiện đại để có trải nghiệm tốt nhất.",
+        );
         return;
       }
       if (Notification.permission === "granted") {
         // Already granted — silently re-subscribe
         requestAndSubscribePush();
+        alert(
+          "Bạn đã bật thông báo trước đó. Nếu bạn không nhận được nhắc nhở, vui lòng kiểm tra cài đặt thông báo của trình duyệt hoặc thử đăng ký lại.",
+        );
       } else if (Notification.permission === "default") {
         // Not yet asked — show banner so user can trigger via gesture (required on mobile)
         setShowNotifBanner(true);
@@ -102,7 +108,10 @@ export default function BudgetDashboard() {
   return (
     <div className="min-h-dvh bg-[#f5f5f7]">
       {/* Top nav bar */}
-      <header className="bg-white/80 backdrop-blur-xl border-b border-zinc-200/60 sticky top-0 z-30" style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      <header
+        className="bg-white/80 backdrop-blur-xl border-b border-zinc-200/60 sticky top-0 z-30"
+        style={{ paddingTop: "env(safe-area-inset-top)" }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-xl bg-zinc-900 flex items-center justify-center">
