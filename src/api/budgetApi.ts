@@ -5,6 +5,7 @@ import type {
   BudgetItemInput,
   BudgetCategory,
   AppNotification,
+  VendorInput,
 } from "../types/budget";
 
 // External backend for budget CRUD
@@ -24,9 +25,7 @@ export const budgetApi = {
     const params = category ? { category } : {};
     const { data } = await backendApi.get<ApiResponse<BudgetItem[]>>(
       "/budgets",
-      {
-        params,
-      },
+      { params },
     );
     return data.data;
   },
@@ -52,6 +51,50 @@ export const budgetApi = {
 
   delete: async (id: string): Promise<void> => {
     await backendApi.delete(`/budgets/${id}`);
+  },
+
+  // ── Vendor sub-resource ──────────────────────────────────────────────────
+  addVendor: async (
+    budgetId: string,
+    vendor: VendorInput,
+  ): Promise<BudgetItem> => {
+    const { data } = await backendApi.post<ApiResponse<BudgetItem>>(
+      `/budgets/${budgetId}/vendors`,
+      vendor,
+    );
+    return data.data;
+  },
+
+  updateVendor: async (
+    budgetId: string,
+    vendorId: string,
+    vendor: Partial<VendorInput>,
+  ): Promise<BudgetItem> => {
+    const { data } = await backendApi.put<ApiResponse<BudgetItem>>(
+      `/budgets/${budgetId}/vendors/${vendorId}`,
+      vendor,
+    );
+    return data.data;
+  },
+
+  deleteVendor: async (
+    budgetId: string,
+    vendorId: string,
+  ): Promise<BudgetItem> => {
+    const { data } = await backendApi.delete<ApiResponse<BudgetItem>>(
+      `/budgets/${budgetId}/vendors/${vendorId}`,
+    );
+    return data.data;
+  },
+
+  setDefaultVendor: async (
+    budgetId: string,
+    vendorId: string,
+  ): Promise<BudgetItem> => {
+    const { data } = await backendApi.patch<ApiResponse<BudgetItem>>(
+      `/budgets/${budgetId}/vendors/${vendorId}/default`,
+    );
+    return data.data;
   },
 };
 

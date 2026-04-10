@@ -4,7 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useBudgetStore } from "../store/budgetStore";
 import { useNotificationStore } from "../store/notificationStore";
-import type { BudgetItem, BudgetStatus } from "../types/budget";
+import type { BudgetItem, BudgetStatus, Vendor } from "../types/budget";
 import { STATUS_LABELS, STATUS_ORDER } from "../types/budget";
 import {
   formatCurrency,
@@ -20,12 +20,21 @@ import {
   CalendarClock,
   Check,
   ArrowLeft,
+  Eye,
 } from "lucide-react";
 
 interface Props {
   items: BudgetItem[];
   onEdit: (item: BudgetItem) => void;
   onDelete: (item: BudgetItem) => void;
+  onDetail: (item: BudgetItem) => void;
+}
+
+function getDisplayVendor(item: BudgetItem): Vendor | null {
+  if (!item.vendors || item.vendors.length === 0) return null;
+  const def = item.vendors.find((v) => v.isDefault);
+  if (def) return def;
+  return item.vendors.reduce((a, b) => (a.price <= b.price ? a : b));
 }
 
 // ── Status picker popover ─────────────────────────────────────────────────────
@@ -298,7 +307,12 @@ function getDeadlineWarning(item: BudgetItem): {
   return { rowBorder: "", badge: null, badgeCls: "" };
 }
 
-export default function BudgetTable({ items, onEdit, onDelete }: Props) {
+export default function BudgetTable({
+  items,
+  onEdit,
+  onDelete,
+  onDetail,
+}: Props) {
   const { updateItem } = useBudgetStore();
   const { highlightDeadline } = useNotificationStore();
 
@@ -352,10 +366,7 @@ export default function BudgetTable({ items, onEdit, onDelete }: Props) {
                 Hạn chốt
               </th>
               <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-widest">
-                Địa chỉ
-              </th>
-              <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-widest">
-                SĐT
+                Nhà cung cấp
               </th>
               <th className="text-left px-4 py-3.5 text-[11px] font-semibold text-zinc-400 uppercase tracking-widest">
                 Ghi chú
@@ -449,11 +460,34 @@ export default function BudgetTable({ items, onEdit, onDelete }: Props) {
                       <span className="text-zinc-200 text-xs">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3.5 text-zinc-400 text-xs max-w-[120px] truncate">
-                    {item.address || <span className="text-zinc-200">—</span>}
-                  </td>
-                  <td className="px-4 py-3.5 text-zinc-400 text-xs whitespace-nowrap">
-                    {item.phone || <span className="text-zinc-200">—</span>}
+                  <td className="px-4 py-3.5 max-w-[160px]">
+                    {(() => {
+                      const v = getDisplayVendor(item);
+                      if (!v)
+                        return <span className="text-zinc-200 text-xs">—</span>;
+                      return (
+                        <div>
+                          <p className="text-xs font-semibold text-zinc-700 truncate flex items-center gap-1">
+                            {v.isDefault && (
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                            )}
+                            {v.name}
+                          </p>
+                          <p className="text-[11px] text-amber-600 font-medium tabular-nums">
+                            {new Intl.NumberFormat("vi-VN", {
+                              style: "currency",
+                              currency: "VND",
+                              maximumFractionDigits: 0,
+                            }).format(v.price)}
+                          </p>
+                          {item.vendors.length > 1 && (
+                            <p className="text-[10px] text-zinc-400">
+                              {item.vendors.length} nhà cung cấp
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="px-4 py-3.5 text-zinc-400 text-xs max-w-[120px] truncate">
                     {item.note || <span className="text-zinc-200">—</span>}
@@ -463,6 +497,13 @@ export default function BudgetTable({ items, onEdit, onDelete }: Props) {
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center justify-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => onDetail(item)}
+                        title="Chi tiết vendor"
+                        className="p-1.5 rounded-lg text-zinc-400 hover:text-violet-600 hover:bg-violet-50 transition-colors cursor-pointer"
+                      >
+                        <Eye size={14} />
+                      </button>
                       <button
                         onClick={() => onEdit(item)}
                         title="Sửa"
@@ -507,7 +548,7 @@ export default function BudgetTable({ items, onEdit, onDelete }: Props) {
                 <td className="px-4 py-3.5 text-right font-bold text-amber-600 tabular-nums whitespace-nowrap">
                   {formatCurrency(totalRemaining)}
                 </td>
-                <td colSpan={7} />
+                <td colSpan={6} />
               </tr>
             </tfoot>
           )}
@@ -584,7 +625,9 @@ export default function BudgetTable({ items, onEdit, onDelete }: Props) {
                   </p>
                 </div>
               </div>
-              {(item.address || item.phone || item.note || item.deadline) && (
+              {(item.note ||
+                item.deadline ||
+                (item.vendors && item.vendors.length > 0)) && (
                 <div className="mt-3 text-xs text-zinc-400 space-y-0.5">
                   {item.deadline && (
                     <p className="flex items-center gap-1 font-medium">
@@ -608,12 +651,40 @@ export default function BudgetTable({ items, onEdit, onDelete }: Props) {
                       </span>
                     </p>
                   )}
-                  {item.address && <p>📍 {item.address}</p>}
-                  {item.phone && <p>📞 {item.phone}</p>}
+                  {(() => {
+                    const v = getDisplayVendor(item);
+                    return v ? (
+                      <p className="flex items-center gap-1">
+                        🏪{" "}
+                        <span className="font-medium text-zinc-500">
+                          {v.name}
+                        </span>
+                        {" — "}
+                        <span className="text-amber-600 font-semibold">
+                          {new Intl.NumberFormat("vi-VN", {
+                            style: "currency",
+                            currency: "VND",
+                            maximumFractionDigits: 0,
+                          }).format(v.price)}
+                        </span>
+                        {item.vendors.length > 1 && (
+                          <span className="text-zinc-300">
+                            ({item.vendors.length})
+                          </span>
+                        )}
+                      </p>
+                    ) : null;
+                  })()}
                   {item.note && <p>📝 {item.note}</p>}
                 </div>
               )}
               <div className="flex gap-1 mt-3">
+                <button
+                  onClick={() => onDetail(item)}
+                  className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors cursor-pointer"
+                >
+                  <Eye size={13} /> Vendors
+                </button>
                 <button
                   onClick={() => onEdit(item)}
                   className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition-colors cursor-pointer"

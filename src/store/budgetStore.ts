@@ -4,6 +4,7 @@ import type {
   BudgetCategory,
   BudgetStatus,
   BudgetItemInput,
+  VendorInput,
 } from "../types/budget";
 import { budgetApi } from "../api/budgetApi";
 import { STATUS_ORDER } from "../types/budget";
@@ -20,6 +21,15 @@ interface BudgetState {
   updateItem: (id: string, item: Partial<BudgetItemInput>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   cycleStatus: (id: string) => Promise<void>;
+
+  addVendor: (budgetId: string, vendor: VendorInput) => Promise<void>;
+  updateVendor: (
+    budgetId: string,
+    vendorId: string,
+    vendor: Partial<VendorInput>,
+  ) => Promise<void>;
+  deleteVendor: (budgetId: string, vendorId: string) => Promise<void>;
+  setDefaultVendor: (budgetId: string, vendorId: string) => Promise<void>;
 }
 
 export const suggestStatus = (
@@ -30,6 +40,9 @@ export const suggestStatus = (
   if (depositPaid >= estimatedCost) return "hoan-thanh";
   return "da-coc-mot-phan";
 };
+
+const patchItem = (items: BudgetItem[], updated: BudgetItem): BudgetItem[] =>
+  items.map((i) => (i._id === updated._id ? updated : i));
 
 export const useBudgetStore = create<BudgetState>((set, get) => ({
   items: [],
@@ -65,9 +78,7 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
     set({ error: null });
     try {
       const updated = await budgetApi.update(id, updates);
-      set((state) => ({
-        items: state.items.map((i) => (i._id === id ? updated : i)),
-      }));
+      set((state) => ({ items: patchItem(state.items, updated) }));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Lỗi cập nhật";
       set({ error: message });
@@ -91,5 +102,51 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
     const currentIdx = STATUS_ORDER.indexOf(item.status);
     const nextStatus = STATUS_ORDER[(currentIdx + 1) % STATUS_ORDER.length];
     await get().updateItem(id, { status: nextStatus });
+  },
+
+  addVendor: async (budgetId, vendor) => {
+    set({ error: null });
+    try {
+      const updated = await budgetApi.addVendor(budgetId, vendor);
+      set((state) => ({ items: patchItem(state.items, updated) }));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Lỗi thêm vendor";
+      set({ error: message });
+    }
+  },
+
+  updateVendor: async (budgetId, vendorId, vendor) => {
+    set({ error: null });
+    try {
+      const updated = await budgetApi.updateVendor(budgetId, vendorId, vendor);
+      set((state) => ({ items: patchItem(state.items, updated) }));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Lỗi cập nhật vendor";
+      set({ error: message });
+    }
+  },
+
+  deleteVendor: async (budgetId, vendorId) => {
+    set({ error: null });
+    try {
+      const updated = await budgetApi.deleteVendor(budgetId, vendorId);
+      set((state) => ({ items: patchItem(state.items, updated) }));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Lỗi xóa vendor";
+      set({ error: message });
+    }
+  },
+
+  setDefaultVendor: async (budgetId, vendorId) => {
+    set({ error: null });
+    try {
+      const updated = await budgetApi.setDefaultVendor(budgetId, vendorId);
+      set((state) => ({ items: patchItem(state.items, updated) }));
+    } catch (err: unknown) {
+      const message =
+        err instanceof Error ? err.message : "Lỗi đặt vendor mặc định";
+      set({ error: message });
+    }
   },
 }));

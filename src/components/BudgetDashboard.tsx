@@ -9,6 +9,7 @@ import BudgetTable from "./BudgetTable";
 import BudgetChart from "./BudgetChart";
 import BudgetModal from "./BudgetModal";
 import DeleteConfirm from "./DeleteConfirm";
+import BudgetDetail from "./BudgetDetail";
 import NotificationCenter from "./NotificationCenter";
 import {
   Plus,
@@ -39,6 +40,7 @@ export default function BudgetDashboard() {
   const [modalKey, setModalKey] = useState(0);
   const [editItem, setEditItem] = useState<BudgetItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BudgetItem | null>(null);
+  const [detailItem, setDetailItem] = useState<BudgetItem | null>(null);
   const [chartOpen, setChartOpen] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
 
@@ -90,12 +92,9 @@ export default function BudgetDashboard() {
     itemName: string;
     estimatedCost: number;
     depositPaid: number;
-    address: string;
-    phone: string;
     note: string;
     status: BudgetStatus;
     category: BudgetCategory;
-    vendorName: string;
     deadline: string | null;
   }) => {
     if (editItem) await updateItem(editItem._id, data);
@@ -210,6 +209,7 @@ export default function BudgetDashboard() {
               items={filteredItems}
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
+              onDetail={setDetailItem}
             />
           )}
         </div>
@@ -289,6 +289,9 @@ export default function BudgetDashboard() {
         onConfirm={handleDeleteConfirm}
         onCancel={() => setDeleteTarget(null)}
       />
+      {detailItem && (
+        <BudgetDetail item={detailItem} onClose={() => setDetailItem(null)} />
+      )}
     </div>
   );
 }

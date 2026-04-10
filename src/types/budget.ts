@@ -2,6 +2,15 @@ export type BudgetCategory = "dam-hoi" | "dam-cuoi";
 
 export type BudgetStatus = "chua-coc" | "da-coc-mot-phan" | "hoan-thanh";
 
+export interface Vendor {
+  _id: string;
+  name: string;
+  address: string;
+  phone: string;
+  price: number;
+  isDefault: boolean;
+}
+
 export interface BudgetItem {
   _id: string;
   category: BudgetCategory;
@@ -9,11 +18,9 @@ export interface BudgetItem {
   estimatedCost: number;
   depositPaid: number;
   remainingCost: number;
-  address: string;
-  phone: string;
   note: string;
   status: BudgetStatus;
-  vendorName: string;
+  vendors: Vendor[];
   deadline: string | null; // ISO date string
   notifyStage: number;
   lastNotificationSent: string | null;
@@ -29,7 +36,10 @@ export type BudgetItemInput = Omit<
   | "updatedAt"
   | "notifyStage"
   | "lastNotificationSent"
+  | "vendors"
 >;
+
+export type VendorInput = Omit<Vendor, "_id" | "isDefault">;
 
 export interface ApiResponse<T> {
   success: boolean;

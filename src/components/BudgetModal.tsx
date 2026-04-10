@@ -11,12 +11,9 @@ interface SubmitPayload {
   itemName: string;
   estimatedCost: number;
   depositPaid: number;
-  address: string;
-  phone: string;
   note: string;
   status: BudgetStatus;
   category: BudgetCategory;
-  vendorName: string;
   deadline: string | null;
 }
 
@@ -36,11 +33,8 @@ function getInitial(editItem: BudgetItem | null | undefined) {
         editItem.estimatedCost > 0 ? formatNumber(editItem.estimatedCost) : "",
       depositPaid:
         editItem.depositPaid > 0 ? formatNumber(editItem.depositPaid) : "",
-      address: editItem.address,
-      phone: editItem.phone,
       note: editItem.note,
       status: editItem.status,
-      vendorName: editItem.vendorName || "",
       deadline: editItem.deadline ? editItem.deadline.split("T")[0] : "",
     };
   }
@@ -48,11 +42,8 @@ function getInitial(editItem: BudgetItem | null | undefined) {
     itemName: "",
     estimatedCost: "",
     depositPaid: "",
-    address: "",
-    phone: "",
     note: "",
     status: "chua-coc" as BudgetStatus,
-    vendorName: "",
     deadline: "",
   };
 }
@@ -73,11 +64,8 @@ export default function BudgetModal({
   const [itemName, setItemName] = useState(initial.itemName);
   const [estimatedCost, setEstimatedCost] = useState(initial.estimatedCost);
   const [depositPaid, setDepositPaid] = useState(initial.depositPaid);
-  const [address, setAddress] = useState(initial.address);
-  const [phone, setPhone] = useState(initial.phone);
   const [note, setNote] = useState(initial.note);
   const [status, setStatus] = useState<BudgetStatus>(initial.status);
-  const [vendorName, setVendorName] = useState(initial.vendorName);
   const [deadline, setDeadline] = useState(initial.deadline);
 
   const handleEstimatedChange = (val: string) => {
@@ -99,12 +87,9 @@ export default function BudgetModal({
       itemName: itemName.trim(),
       estimatedCost: parseInputNumber(estimatedCost),
       depositPaid: parseInputNumber(depositPaid),
-      address,
-      phone,
       note,
       status,
       category: editItem?.category ?? activeTab,
-      vendorName: vendorName.trim(),
       deadline: deadline || null,
     });
     onClose();
@@ -201,52 +186,15 @@ export default function BudgetModal({
             </div>
           )}
 
-          {/* Vendor info */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Địa chỉ</label>
-              <input
-                type="text"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
-                className={inputCls}
-                placeholder="Địa chỉ nhà cung cấp"
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Số điện thoại</label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className={inputCls}
-                placeholder="0900 000 000"
-                inputMode="tel"
-              />
-            </div>
-          </div>
-
-          {/* Vendor name + Deadline */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={labelCls}>Nhà cung cấp</label>
-              <input
-                type="text"
-                value={vendorName}
-                onChange={(e) => setVendorName(e.target.value)}
-                className={inputCls}
-                placeholder="Tên nhà cung cấp"
-              />
-            </div>
-            <div>
-              <label className={labelCls}>Ngày hết hạn</label>
-              <input
-                type="date"
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className={inputCls}
-              />
-            </div>
+          {/* Deadline */}
+          <div>
+            <label className={labelCls}>Ngày hết hạn</label>
+            <input
+              type="date"
+              value={deadline}
+              onChange={(e) => setDeadline(e.target.value)}
+              className={inputCls}
+            />
           </div>
 
           {/* Note */}
