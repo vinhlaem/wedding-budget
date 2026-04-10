@@ -8,7 +8,14 @@ import BudgetChart from "./BudgetChart";
 import BudgetModal from "./BudgetModal";
 import DeleteConfirm from "./DeleteConfirm";
 import NotificationCenter from "./NotificationCenter";
-import { Plus, Loader2, AlertCircle, PieChart, X } from "lucide-react";
+import {
+  Plus,
+  Loader2,
+  AlertCircle,
+  PieChart,
+  X,
+  RefreshCw,
+} from "lucide-react";
 import { registerServiceWorker } from "../services/serviceWorker";
 import { requestAndSubscribePush } from "../services/push.service";
 import { Bell, BellOff } from "lucide-react";
@@ -44,17 +51,12 @@ export default function BudgetDashboard() {
       const supportsNotif = "Notification" in window && "PushManager" in window;
       if (!supportsNotif) {
         console.warn("[push] Notifications not supported");
-        alert(
-          "Trình duyệt của bạn không hỗ trợ thông báo. Vui lòng sử dụng trình duyệt hiện đại để có trải nghiệm tốt nhất.",
-        );
+
         return;
       }
       if (Notification.permission === "granted") {
         // Already granted — silently re-subscribe
         requestAndSubscribePush();
-        alert(
-          "Bạn đã bật thông báo trước đó. Nếu bạn không nhận được nhắc nhở, vui lòng kiểm tra cài đặt thông báo của trình duyệt hoặc thử đăng ký lại.",
-        );
       } else if (Notification.permission === "default") {
         // Not yet asked — show banner so user can trigger via gesture (required on mobile)
         setShowNotifBanner(true);
@@ -128,6 +130,14 @@ export default function BudgetDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <NotificationCenter />
+            {/* Refresh — mobile only */}
+            <button
+              onClick={() => window.location.reload()}
+              className="md:hidden p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-500"
+              aria-label="Làm mới trang"
+            >
+              <RefreshCw size={16} />
+            </button>
             <button
               onClick={handleAdd}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer"

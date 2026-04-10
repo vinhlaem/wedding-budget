@@ -54,18 +54,11 @@ export function useForegroundPush(): void {
 
 export async function requestAndSubscribePush(): Promise<boolean> {
   if (!("Notification" in window) || !("PushManager" in window)) {
-    alert(
-      "Trình duyệt của bạn không hỗ trợ thông báo. Vui lòng sử dụng trình duyệt hiện đại để có trải nghiệm tốt nhất.",
-    );
     return false;
   }
 
-  // Ask permission
-  const permission = await Notification.requestPermission();
-  if (permission !== "granted") {
-    alert(
-      "Bạn đã từ chối thông báo. Vui lòng bật thông báo trong cài đặt trình duyệt để nhận nhắc nhở.",
-    );
+  // Reject early without prompting if the user has already denied
+  if (Notification.permission === "denied") {
     return false;
   }
 
@@ -78,23 +71,31 @@ export async function requestAndSubscribePush(): Promise<boolean> {
     publicKey = await pushApi.getVapidKey();
   } catch {
     console.warn("[push] Could not fetch VAPID key");
-    alert(
-      "Không thể kết nối đến máy chủ thông báo. Vui lòng thử lại sau hoặc liên hệ hỗ trợ nếu vấn đề vẫn tiếp diễn.",
-    );
+
     return false;
   }
 
-  // Check existing subscription
+  // Check existing subscription BEFORE asking for permission.
+  // If we already have one, silently re-sync it with the server and return.
+  // This prevents a double-call (e.g. from StrictMode or on app reopen) from
+  // triggering the permission prompt a second time and showing conflicting alerts.
   const existing = await reg.pushManager.getSubscription();
   if (existing) {
-    // Re-save it in case the server lost it
     await pushApi
       .subscribe(existing.toJSON() as PushSubscriptionJSON)
       .catch(() => null);
-    alert(
-      "Bạn đã đăng ký nhận thông báo rồi. Nếu bạn không nhận được nhắc nhở, vui lòng kiểm tra cài đặt thông báo của trình duyệt hoặc liên hệ hỗ trợ.",
-    );
     return true;
+  }
+
+  // Only call requestPermission() when the state is still "default" (undecided).
+  // If already "granted" (e.g. iOS re-check), skip the prompt entirely.
+  const permission =
+    Notification.permission === "granted"
+      ? "granted"
+      : await Notification.requestPermission();
+
+  if (permission !== "granted") {
+    return false;
   }
 
   // Subscribe
@@ -104,8 +105,6 @@ export async function requestAndSubscribePush(): Promise<boolean> {
   });
 
   await pushApi.subscribe(subscription.toJSON() as PushSubscriptionJSON);
-  alert(
-    "Bạn đã đăng ký nhận thông báo thành công. Nếu bạn không nhận được nhắc nhở, vui lòng kiểm tra cài đặt thông báo của trình duyệt hoặc liên hệ hỗ trợ.",
-  );
+
   return true;
 }
