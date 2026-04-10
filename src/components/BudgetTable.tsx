@@ -80,7 +80,6 @@ function StatusPicker({
         btnRef.current &&
         !btnRef.current.contains(e.target as Node)
       ) {
-        setOpen(false);
         setStep("menu");
       }
     };
@@ -683,7 +682,7 @@ export default function BudgetTable({
                   onClick={() => onDetail(item)}
                   className="flex-1 flex items-center justify-center gap-1 py-2 rounded-xl text-xs font-medium text-violet-600 bg-violet-50 hover:bg-violet-100 transition-colors cursor-pointer"
                 >
-                  <Eye size={13} /> Vendors
+                  <Eye size={13} /> Chi tiết
                 </button>
                 <button
                   onClick={() => onEdit(item)}
