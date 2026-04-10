@@ -1,4 +1,6 @@
-﻿import { useBudgetStore } from "../store/budgetStore";
+﻿"use client";
+
+import { useBudgetStore } from "../store/budgetStore";
 import { formatCurrency } from "../utils/format";
 import { Wallet, CreditCard, PiggyBank, TrendingUp } from "lucide-react";
 

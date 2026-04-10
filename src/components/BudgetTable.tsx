@@ -1,4 +1,6 @@
-﻿import { useRef, useState, useEffect } from "react";
+﻿"use client";
+
+import { useRef, useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useBudgetStore } from "../store/budgetStore";
 import { useNotificationStore } from "../store/notificationStore";

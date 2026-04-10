@@ -1,4 +1,6 @@
-﻿import { useEffect, useState } from "react";
+﻿"use client";
+
+import { useEffect, useState } from "react";
 import { useBudgetStore } from "../store/budgetStore";
 import type { BudgetItem, BudgetStatus, BudgetCategory } from "../types/budget";
 import SummaryCards from "./SummaryCards";

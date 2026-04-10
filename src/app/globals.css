@@ -1,5 +1,5 @@
-﻿@import "tailwindcss";
-@source "../src";
+@import "tailwindcss";
+@source "..";
 
 @layer base {
   * {

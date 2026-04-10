@@ -1,4 +1,4 @@
-// src/components/NotificationCenter.tsx
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";

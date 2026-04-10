@@ -1,4 +1,4 @@
-// src/services/push.service.ts
+"use client";
 
 import { useEffect } from "react";
 import { pushApi } from "../api/budgetApi";
@@ -103,8 +103,6 @@ export async function requestAndSubscribePush(): Promise<boolean> {
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(publicKey),
   });
-
-  alert(JSON.stringify(subscription.toJSON()));
 
   await pushApi.subscribe(subscription.toJSON() as PushSubscriptionJSON);
 

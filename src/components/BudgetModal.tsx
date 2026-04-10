@@ -1,4 +1,6 @@
-﻿import { useState } from "react";
+﻿"use client";
+
+import { useState } from "react";
 import type { BudgetItem, BudgetCategory, BudgetStatus } from "../types/budget";
 import { STATUS_ORDER, STATUS_LABELS } from "../types/budget";
 import { suggestStatus } from "../store/budgetStore";
