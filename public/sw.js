@@ -9,27 +9,37 @@ self.addEventListener("activate", (event) => {
 });
 
 self.addEventListener("push", (event) => {
-  if (!event.data) return;
+  event.waitUntil(
+    (async () => {
+      let payload = {};
 
-  let payload;
-  try {
-    payload = event.data.json();
-  } catch {
-    payload = { title: "Wedding Budget 💍", body: event.data.text() };
-  }
+      if (event.data) {
+        try {
+          payload = event.data.json();
+        } catch {
+          // If JSON parse fails, treat raw text as the body
+          payload = { body: event.data.text() };
+        }
+      }
 
-  const title = payload.title || "Wedding Budget 💍";
-  const options = {
-    body: payload.body || "",
-    icon: "/favicon.ico",
-    badge: "/favicon.ico",
-    tag: payload.tag || "wedding-budget",
-    renotify: true,
-    requireInteraction: false,
-    data: payload.data || {},
-  };
+      const title =
+        (payload.title && String(payload.title).trim()) || "Wedding Budget 💍";
+      const options = {
+        body:
+          (payload.body && String(payload.body).trim()) ||
+          "Bạn có thông báo mới.",
+        icon: "/favicon.ico",
+        badge: "/favicon.ico",
+        tag: payload.tag || "wedding-budget",
+        renotify: true,
+        // requireInteraction omitted — not supported on iOS and causes
+        // push registration to fail on some WebKit versions.
+        data: payload.data || {},
+      };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+      await self.registration.showNotification(title, options);
+    })(),
+  );
 });
 
 self.addEventListener("notificationclick", (event) => {
