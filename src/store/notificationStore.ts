@@ -8,16 +8,24 @@ import {
   markAllNotificationsRead,
 } from "../services/notification.service";
 
+export interface ForegroundToast {
+  title: string;
+  body: string;
+}
+
 interface NotificationState {
   notifications: AppNotification[];
   unreadCount: number;
   loading: boolean;
   highlightDeadline: string | null; // "YYYY-MM-DD" — set when notification clicked
+  foregroundToast: ForegroundToast | null;
 
   fetchAll: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   setHighlightDeadline: (date: string | null) => void;
+  showForegroundToast: (toast: ForegroundToast) => void;
+  clearForegroundToast: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set) => ({
@@ -25,6 +33,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   unreadCount: 0,
   loading: false,
   highlightDeadline: null,
+  foregroundToast: null,
 
   fetchAll: async () => {
     set({ loading: true });
@@ -55,4 +64,7 @@ export const useNotificationStore = create<NotificationState>((set) => ({
   },
 
   setHighlightDeadline: (date) => set({ highlightDeadline: date }),
+
+  showForegroundToast: (toast) => set({ foregroundToast: toast }),
+  clearForegroundToast: () => set({ foregroundToast: null }),
 }));

@@ -1,6 +1,8 @@
 // src/services/push.service.ts
 
+import { useEffect } from "react";
 import { pushApi } from "../api/budgetApi";
+import { useNotificationStore } from "../store/notificationStore";
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -10,6 +12,44 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   const output = new Uint8Array(buffer);
   for (let i = 0; i < raw.length; ++i) output[i] = raw.charCodeAt(i);
   return output;
+}
+
+/**
+ * useForegroundPush
+ *
+ * React hook — listens for PUSH_RECEIVED messages posted by the service worker
+ * when the app is open in the foreground. On receipt it:
+ *   1. Refreshes the notification list from the server.
+ *   2. Triggers a brief in-app toast via the notification store.
+ *
+ * Mount this hook once at the top of the app (e.g. NotificationCenter).
+ */
+export function useForegroundPush(): void {
+  const fetchAll = useNotificationStore((s) => s.fetchAll);
+  const showForegroundToast = useNotificationStore(
+    (s) => s.showForegroundToast,
+  );
+
+  useEffect(() => {
+    if (!navigator.serviceWorker) return;
+
+    const handler = (event: MessageEvent) => {
+      if (event.data?.type !== "PUSH_RECEIVED") return;
+      const { title, body } =
+        (event.data.payload as { title?: string; body?: string }) ?? {};
+      // Refresh badge + panel
+      fetchAll();
+      // Show in-app toast
+      showForegroundToast({
+        title: title ?? "Wedding Budget 💍",
+        body: body ?? "Bạn có thông báo mới.",
+      });
+    };
+
+    navigator.serviceWorker.addEventListener("message", handler);
+    return () =>
+      navigator.serviceWorker.removeEventListener("message", handler);
+  }, [fetchAll, showForegroundToast]);
 }
 
 export async function requestAndSubscribePush(): Promise<boolean> {

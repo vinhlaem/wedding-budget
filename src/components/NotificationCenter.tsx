@@ -6,6 +6,7 @@ import { Bell, Check, CheckCheck, X } from "lucide-react";
 import { useNotificationStore } from "../store/notificationStore";
 import type { AppNotification } from "../types/budget";
 import { NOTIFY_STAGE_LABELS } from "../types/budget";
+import { useForegroundPush } from "../services/push.service";
 
 const STAGE_COLORS: Record<number, { bg: string; text: string }> = {
   1: { bg: "bg-blue-50 border-blue-200", text: "text-blue-700" },
@@ -148,9 +149,21 @@ export default function NotificationCenter() {
     markRead,
     markAllRead,
     setHighlightDeadline,
+    foregroundToast,
+    clearForegroundToast,
   } = useNotificationStore();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+
+  // Wire foreground push listener
+  useForegroundPush();
+
+  // Auto-dismiss foreground toast after 4 seconds
+  useEffect(() => {
+    if (!foregroundToast) return;
+    const id = setTimeout(clearForegroundToast, 4_000);
+    return () => clearTimeout(id);
+  }, [foregroundToast, clearForegroundToast]);
 
   // Close on outside click
   useEffect(() => {
@@ -196,6 +209,29 @@ export default function NotificationCenter() {
 
   return (
     <div className="relative" ref={ref}>
+      {/* Foreground push toast */}
+      {foregroundToast &&
+        createPortal(
+          <div className="fixed top-4 right-4 z-9999 w-80 max-w-[calc(100vw-2rem)] bg-white border border-zinc-200 rounded-2xl shadow-2xl p-4 flex items-start gap-3 animate-fade-in">
+            <Bell size={18} className="text-blue-500 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-zinc-800 leading-snug">
+                {foregroundToast.title}
+              </p>
+              <p className="text-xs text-zinc-500 mt-0.5 leading-snug">
+                {foregroundToast.body}
+              </p>
+            </div>
+            <button
+              onClick={clearForegroundToast}
+              className="shrink-0 text-zinc-400 hover:text-zinc-600 transition-colors"
+              aria-label="Đóng thông báo"
+            >
+              <X size={15} />
+            </button>
+          </div>,
+          document.body,
+        )}
       {/* Bell button */}
       <button
         onClick={() => setOpen((v) => !v)}

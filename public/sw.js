@@ -17,27 +17,46 @@ self.addEventListener("push", (event) => {
         try {
           payload = event.data.json();
         } catch {
-          // If JSON parse fails, treat raw text as the body
           payload = { body: event.data.text() };
         }
       }
 
       const title =
         (payload.title && String(payload.title).trim()) || "Wedding Budget 💍";
-      const options = {
-        body:
-          (payload.body && String(payload.body).trim()) ||
-          "Bạn có thông báo mới.",
+      const body =
+        (payload.body && String(payload.body).trim()) ||
+        "Bạn có thông báo mới.";
+
+      // Check if the app is currently open in a window
+      const windowClients = await clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      const openClients = windowClients.filter((c) =>
+        c.url.startsWith(self.location.origin),
+      );
+
+      if (openClients.length > 0) {
+        // App is in foreground — let the page show its own in-app UI
+        for (const client of openClients) {
+          client.postMessage({
+            type: "PUSH_RECEIVED",
+            payload: { title, body, data: payload.data || {} },
+          });
+        }
+        return;
+      }
+
+      // App is in background — show system notification
+      await self.registration.showNotification(title, {
+        body,
         icon: "/favicon.ico",
         badge: "/favicon.ico",
         tag: payload.tag || "wedding-budget",
         renotify: true,
-        // requireInteraction omitted — not supported on iOS and causes
-        // push registration to fail on some WebKit versions.
         data: payload.data || {},
-      };
-
-      await self.registration.showNotification(title, options);
+      });
     })(),
   );
 });
