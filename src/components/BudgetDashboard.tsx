@@ -41,7 +41,7 @@ export default function BudgetDashboard() {
     deleteItem,
   } = useBudgetStore();
 
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
@@ -72,7 +72,7 @@ export default function BudgetDashboard() {
           { token: shareToken },
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("wb:auth")}`,
+              Authorization: `Bearer ${token}`,
             },
           },
         );
