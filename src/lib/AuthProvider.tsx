@@ -66,18 +66,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
 
     // If there was a pending share token, accept it
-    const pending = localStorage.getItem("wb:pendingShareToken");
-    if (pending) {
-      try {
-        await axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
-          { token: pending },
-          { headers: { Authorization: `Bearer ${appToken}` } },
-        );
-        localStorage.removeItem("wb:pendingShareToken");
-      } catch (err) {
-        console.error("Failed to accept share token after login", err);
-      }
+    try {
+      await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
+        { token: appToken },
+        { headers: { Authorization: `Bearer ${appToken}` } },
+      );
+    } catch (err) {
+      console.error("Failed to accept share token after login", err);
     }
   };
 
