@@ -22,6 +22,10 @@ import {
 import { registerServiceWorker } from "../services/serviceWorker";
 import { requestAndSubscribePush } from "../services/push.service";
 import { Bell, BellOff } from "lucide-react";
+import { useAuth } from "../lib/AuthProvider";
+import GoogleLogin from "./GoogleLogin";
+import ShareButton from "./ShareButton";
+import { LogOut } from "lucide-react";
 
 export default function BudgetDashboard() {
   const {
@@ -36,6 +40,8 @@ export default function BudgetDashboard() {
     deleteItem,
   } = useBudgetStore();
 
+  const { user, logout } = useAuth();
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalKey, setModalKey] = useState(0);
   const [editItem, setEditItem] = useState<BudgetItem | null>(null);
@@ -44,7 +50,10 @@ export default function BudgetDashboard() {
   const [chartOpen, setChartOpen] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
 
+  // Always declare ALL hooks before any conditional return
   useEffect(() => {
+    if (!user) return;
+
     fetchItems();
     // Register service worker
     registerServiceWorker().then((reg) => {
@@ -66,7 +75,29 @@ export default function BudgetDashboard() {
         setShowNotifBanner(true);
       }
     });
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Login screen — rendered after all hooks are declared
+  if (!user) {
+    return (
+      <div className="min-h-dvh flex items-center justify-center bg-[#f5f5f7]">
+        <div className="max-w-sm w-full mx-4 p-8 bg-white rounded-2xl shadow-md text-center">
+          <div className="w-12 h-12 rounded-xl bg-zinc-900 flex items-center justify-center mx-auto mb-4">
+            <span className="text-white text-2xl leading-none">💒</span>
+          </div>
+          <h2 className="text-lg font-bold text-zinc-900 mb-1">
+            Wedding Budget
+          </h2>
+          <p className="text-sm text-zinc-500 mb-6">
+            Đăng nhập để quản lý chi phí đám cưới
+          </p>
+          <div className="flex justify-center">
+            <GoogleLogin />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleEnableNotifications = async () => {
     setShowNotifBanner(false);
@@ -131,6 +162,8 @@ export default function BudgetDashboard() {
           </div>
           <div className="flex items-center gap-2">
             <NotificationCenter />
+            {/* Share workspace */}
+            <ShareButton />
             {/* Refresh — mobile only */}
             <button
               onClick={() => window.location.reload()}
@@ -145,6 +178,15 @@ export default function BudgetDashboard() {
             >
               <Plus size={14} />
               Thêm mới
+            </button>
+            {/* Logout */}
+            <button
+              onClick={logout}
+              title="Đăng xuất"
+              className="p-2 rounded-xl hover:bg-zinc-100 transition-colors text-zinc-500 cursor-pointer"
+              aria-label="Đăng xuất"
+            >
+              <LogOut size={16} />
             </button>
           </div>
         </div>

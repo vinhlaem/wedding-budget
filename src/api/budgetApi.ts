@@ -14,10 +14,36 @@ const backendApi = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+export const getToken = (): string | null => {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem("wb:auth");
+    if (!raw) return null;
+    // wb:auth is stored as JSON { token, user }
+    const parsed = JSON.parse(raw);
+    const t = parsed?.token;
+    return typeof t === "string" ? t : null;
+  } catch (e) {
+    // invalid JSON or other error — clear invalid item
+    try {
+      localStorage.removeItem("wb:auth");
+    } catch (err) {}
+    return null;
+  }
+};
+
 // Same-origin API routes — required for iOS PWA push compatibility
 const localApi = axios.create({
   baseURL: "/api",
   headers: { "Content-Type": "application/json" },
+});
+
+backendApi.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers["Authorization"] = `Bearer ${token}`;
+  }
+  return config;
 });
 
 export const budgetApi = {
@@ -96,7 +122,53 @@ export const budgetApi = {
     );
     return data.data;
   },
+
+  // Workspace share — shares ALL of the current user's budget items
+  createShareLink: async (): Promise<{
+    link: string;
+    token?: string;
+  } | null> => {
+    const data = await backendApi.post<{ link: string; token?: string }>(
+      "/budgets/share",
+    );
+    return data.data;
+  },
 };
+
+// Auth helpers for frontend to set auth header after login
+export function setAuthToken(token?: string | null) {
+  if (token) {
+    backendApi.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  } else {
+    delete backendApi.defaults.headers.common["Authorization"];
+  }
+}
+
+// Initialize auth header from localStorage (client only).
+// AuthProvider stores `{ token, user }` under 'wb:auth'. If a token exists,
+// set it on the axios instance so page reloads keep the session.
+try {
+  if (typeof window !== "undefined") {
+    const raw = localStorage.getItem("wb:auth");
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw);
+        const t = parsed?.token;
+        if (t && typeof t === "string") {
+          setAuthToken(t);
+        }
+      } catch (e) {
+        // ignore parse errors
+        // clear invalid item to avoid future parse issues
+        try {
+          localStorage.removeItem("wb:auth");
+        } catch (e) {}
+      }
+    }
+  }
+} catch (e) {
+  // defensive: any error reading localStorage should not break module init
+}
 
 export const pushApi = {
   getVapidKey: async (): Promise<string> => {

@@ -182,18 +182,20 @@ export default function BudgetDetail({ item, onClose }: Props) {
                   : `${liveItem.vendors.length} nhà cung cấp · Chọn mặc định bằng nút tròn`}
               </p>
             </div>
-            {!adding && (
-              <button
-                onClick={() => {
-                  setAdding(true);
-                  setEditingId(null);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white rounded-xl text-xs font-semibold hover:bg-zinc-800 transition-colors cursor-pointer"
-              >
-                <Plus size={13} />
-                Thêm vendor
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {!adding && (
+                <button
+                  onClick={() => {
+                    setAdding(true);
+                    setEditingId(null);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-zinc-900 text-white rounded-xl text-xs font-semibold hover:bg-zinc-800 transition-colors cursor-pointer"
+                >
+                  <Plus size={13} />
+                  Thêm vendor
+                </button>
+              )}
+            </div>
           </div>
 
           {/* ── Vendor list ──────────────────────────────────────────────── */}
