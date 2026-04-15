@@ -3,7 +3,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { setAuthToken } from "../api/budgetApi";
 import axios from "axios";
-import { useSearchParams } from "next/navigation";
 
 type User = { email: string; name?: string; role?: string } | null;
 
