@@ -26,7 +26,6 @@ import { useAuth } from "../lib/AuthProvider";
 import GoogleLogin from "./GoogleLogin";
 import ShareButton from "./ShareButton";
 import { LogOut } from "lucide-react";
-import { useSearchParams } from "next/navigation";
 import axios from "axios";
 
 export default function BudgetDashboard() {
@@ -52,25 +51,38 @@ export default function BudgetDashboard() {
   const [chartOpen, setChartOpen] = useState(false);
   const [showNotifBanner, setShowNotifBanner] = useState(false);
 
-  const searchParams = useSearchParams();
-
   useEffect(() => {
-    const shareToken = searchParams.get("shareToken");
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const shareToken = params.get("shareToken");
+    if (!shareToken) return;
+
+    // If user is not logged in yet, save as pending token to accept after login
+    if (!user) {
+      try {
+        localStorage.setItem("wb:pendingShareToken", shareToken);
+      } catch (e) {}
+      return;
+    }
+
     const acceptShare = async () => {
       try {
         await axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/api/budgets/share/accept`,
           { token: shareToken },
         );
         localStorage.removeItem("wb:pendingShareToken");
+        // remove shareToken from URL without reloading
+        const url = new URL(window.location.href);
+        url.searchParams.delete("shareToken");
+        window.history.replaceState({}, "", url.toString());
       } catch (err) {
         console.error("Failed to accept share token after login", err);
       }
     };
-    if (shareToken) {
-      acceptShare();
-    }
-  }, [searchParams]);
+
+    acceptShare();
+  }, [user]);
 
   // Always declare ALL hooks before any conditional return
   useEffect(() => {
