@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { setAuthToken } from "../api/budgetApi";
 import axios from "axios";
+import { useSearchParams } from "next/navigation";
 
 type User = { email: string; name?: string; role?: string } | null;
 
@@ -25,6 +26,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User>(null);
   const [token, setToken] = useState<string | null>(null);
 
+  const searchParams = useSearchParams();
+
   useEffect(() => {
     // hydrate from localStorage
     const saved = localStorage.getItem("wb:auth");
@@ -41,6 +44,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, []);
+
+  useEffect(() => {
+    const shareToken = searchParams.get("shareToken");
+    if (shareToken) {
+      localStorage.setItem("wb:pendingShareToken", shareToken);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (token) {
@@ -66,14 +76,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(data.user);
 
     // If there was a pending share token, accept it
-    try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
-        { token: appToken },
-        { headers: { Authorization: `Bearer ${appToken}` } },
-      );
-    } catch (err) {
-      console.error("Failed to accept share token after login", err);
+    const pending = localStorage.getItem("wb:pendingShareToken");
+    if (pending) {
+      try {
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
+          { token: pending },
+          { headers: { Authorization: `Bearer ${appToken}` } },
+        );
+        localStorage.removeItem("wb:pendingShareToken");
+      } catch (err) {
+        console.error("Failed to accept share token after login", err);
+      }
     }
   };
 
