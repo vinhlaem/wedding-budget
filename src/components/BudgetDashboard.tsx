@@ -68,7 +68,7 @@ export default function BudgetDashboard() {
     const acceptShare = async () => {
       try {
         await axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/api/budgets/share/accept`,
+          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
           { token: shareToken },
         );
         localStorage.removeItem("wb:pendingShareToken");
