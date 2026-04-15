@@ -70,6 +70,11 @@ export default function BudgetDashboard() {
         await axios.post(
           `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
           { token: shareToken },
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("wb:auth")}`,
+            },
+          },
         );
         localStorage.removeItem("wb:pendingShareToken");
         // remove shareToken from URL without reloading
