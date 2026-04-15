@@ -81,6 +81,8 @@ export default function BudgetDashboard() {
         const url = new URL(window.location.href);
         url.searchParams.delete("shareToken");
         window.history.replaceState({}, "", url.toString());
+
+        fetchItems();
       } catch (err) {
         console.error("Failed to accept share token after login", err);
       }
