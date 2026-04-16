@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { useBudgetStore } from "../store/budgetStore";
-import type { BudgetItem, BudgetStatus, BudgetCategory } from "../types/budget";
+import type {
+  BudgetItem,
+  BudgetStatus,
+  BudgetCategory,
+  BudgetDefaultPayload,
+} from "../types/budget";
 import SummaryCards from "./SummaryCards";
 import TabSelector from "./TabSelector";
 import BudgetTable from "./BudgetTable";
@@ -27,6 +32,7 @@ import GoogleLogin from "./GoogleLogin";
 import ShareButton from "./ShareButton";
 import { LogOut } from "lucide-react";
 import axios from "axios";
+import BudgetDefaultModal from "./BudgetDefaultModal";
 
 export default function BudgetDashboard() {
   const {
@@ -37,6 +43,7 @@ export default function BudgetDashboard() {
     setActiveTab,
     fetchItems,
     addItem,
+    addBulkItems,
     updateItem,
     deleteItem,
   } = useBudgetStore();
@@ -44,6 +51,7 @@ export default function BudgetDashboard() {
   const { user, logout, token } = useAuth();
 
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalDefaultBudget, setModalDefaultBudget] = useState(false);
   const [modalKey, setModalKey] = useState(0);
   const [editItem, setEditItem] = useState<BudgetItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<BudgetItem | null>(null);
@@ -173,6 +181,10 @@ export default function BudgetDashboard() {
     else await addItem(data);
   };
 
+  const handleModalDefaultSubmit = async (data: BudgetDefaultPayload[]) => {
+    await addBulkItems(data);
+  };
+
   const handleDeleteConfirm = async () => {
     if (deleteTarget) {
       await deleteItem(deleteTarget._id);
@@ -213,13 +225,7 @@ export default function BudgetDashboard() {
             >
               <RefreshCw size={16} />
             </button>
-            <button
-              onClick={handleAdd}
-              className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer"
-            >
-              <Plus size={14} />
-              Thêm mới
-            </button>
+
             {/* Logout */}
             <button
               onClick={logout}
@@ -290,9 +296,13 @@ export default function BudgetDashboard() {
           ) : (
             <BudgetTable
               items={filteredItems}
+              isNoData={items.length === 0}
               onEdit={handleEdit}
               onDelete={setDeleteTarget}
               onDetail={setDetailItem}
+              addNewItem={handleAdd}
+              modalOpen={modalDefaultBudget}
+              setModalOpen={setModalDefaultBudget}
             />
           )}
         </div>
@@ -363,6 +373,17 @@ export default function BudgetDashboard() {
           setEditItem(null);
         }}
         onSubmit={handleModalSubmit}
+        editItem={editItem}
+        activeTab={activeTab}
+      />
+
+      <BudgetDefaultModal
+        isOpen={modalDefaultBudget}
+        onClose={() => {
+          setModalDefaultBudget(false);
+          setEditItem(null);
+        }}
+        onSubmit={handleModalDefaultSubmit}
         editItem={editItem}
         activeTab={activeTab}
       />

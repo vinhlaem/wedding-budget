@@ -5,6 +5,7 @@ import type {
   BudgetStatus,
   BudgetItemInput,
   VendorInput,
+  BudgetDefaultPayload,
 } from "../types/budget";
 import { budgetApi } from "../api/budgetApi";
 import { STATUS_ORDER } from "../types/budget";
@@ -18,6 +19,7 @@ interface BudgetState {
   setActiveTab: (tab: BudgetCategory) => void;
   fetchItems: () => Promise<void>;
   addItem: (item: BudgetItemInput) => Promise<void>;
+  addBulkItems: (items: BudgetDefaultPayload[]) => Promise<void>;
   updateItem: (id: string, item: Partial<BudgetItemInput>) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
   cycleStatus: (id: string) => Promise<void>;
@@ -73,7 +75,19 @@ export const useBudgetStore = create<BudgetState>((set, get) => ({
       set({ error: message, loading: false });
     }
   },
-
+  addBulkItems: async (items) => {
+    set({ loading: true, error: null });
+    try {
+      const createdItems = await budgetApi.createBulk(items);
+      set((state) => ({
+        items: [...state.items, ...createdItems],
+        loading: false,
+      }));
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Lỗi thêm mục";
+      set({ error: message, loading: false });
+    }
+  },
   updateItem: async (id, updates) => {
     set({ error: null });
     try {

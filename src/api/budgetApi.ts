@@ -6,6 +6,7 @@ import type {
   BudgetCategory,
   AppNotification,
   VendorInput,
+  BudgetDefaultPayload,
 } from "../types/budget";
 
 // External backend for budget CRUD
@@ -60,6 +61,14 @@ export const budgetApi = {
     const { data } = await backendApi.post<ApiResponse<BudgetItem>>(
       "/budgets",
       item,
+    );
+    return data.data;
+  },
+
+  createBulk: async (items: BudgetDefaultPayload[]): Promise<BudgetItem[]> => {
+    const { data } = await backendApi.post<ApiResponse<BudgetItem[]>>(
+      "/budgets/bulk",
+      { budgets: items },
     );
     return data.data;
   },

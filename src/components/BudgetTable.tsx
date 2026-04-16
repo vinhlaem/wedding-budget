@@ -21,6 +21,7 @@ import {
   Check,
   ArrowLeft,
   Eye,
+  Plus,
 } from "lucide-react";
 
 interface Props {
@@ -28,6 +29,10 @@ interface Props {
   onEdit: (item: BudgetItem) => void;
   onDelete: (item: BudgetItem) => void;
   onDetail: (item: BudgetItem) => void;
+  modalOpen: boolean;
+  setModalOpen: (open: boolean) => void;
+  isNoData: boolean;
+  addNewItem;
 }
 
 function getDisplayVendor(item: BudgetItem): Vendor | null {
@@ -311,6 +316,10 @@ export default function BudgetTable({
   onEdit,
   onDelete,
   onDetail,
+  modalOpen,
+  isNoData,
+  setModalOpen,
+  addNewItem,
 }: Props) {
   const { updateItem } = useBudgetStore();
   const { highlightDeadline } = useNotificationStore();
@@ -378,14 +387,33 @@ export default function BudgetTable({
           </thead>
           <tbody>
             {items.length === 0 && (
-              <tr>
-                <td
-                  colSpan={12}
-                  className="text-center py-16 text-zinc-400 text-sm"
-                >
-                  Chưa có hạng mục nào.
-                </td>
-              </tr>
+              <>
+                <tr>
+                  <td
+                    colSpan={12}
+                    className="text-center py-3.5 text-zinc-400 text-sm"
+                  >
+                    Chưa có hạng mục nào.
+                  </td>
+                </tr>
+
+                <tr>
+                  <td
+                    colSpan={12}
+                    className="text-center py-3.5 text-zinc-400 text-sm"
+                  >
+                    <button
+                      onClick={() => {
+                        isNoData ? setModalOpen(true) : addNewItem();
+                      }}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-zinc-900 text-white rounded-xl text-xs font-semibold hover:bg-zinc-800 transition-colors shadow-sm cursor-pointer"
+                    >
+                      <Plus size={14} color="white" className="text-white" />
+                      {isNoData ? "Thêm hạng mục mẫu" : "Thêm mới"}
+                    </button>
+                  </td>
+                </tr>
+              </>
             )}
             {items.map((item, idx) => {
               const pct =

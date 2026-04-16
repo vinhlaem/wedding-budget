@@ -83,3 +83,14 @@ export const NOTIFY_STAGE_LABELS: Record<number, string> = {
   3: "1 ngày",
   4: "Quá hạn",
 };
+
+export interface BudgetDefaultPayload {
+  category: string;
+  itemName: string;
+  estimatedCost: number;
+  remainingCost: number;
+  depositPaid: number;
+  note: string;
+  status: BudgetStatus;
+  vendors: VendorInput[];
+}
