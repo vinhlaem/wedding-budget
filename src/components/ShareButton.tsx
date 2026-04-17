@@ -4,7 +4,15 @@ import { useState } from "react";
 import { Share2, Check, Copy } from "lucide-react";
 import { budgetApi } from "../api/budgetApi";
 
-export default function ShareButton() {
+export default function ShareButton({
+  noneText,
+  customeClass,
+  iconZize = 13,
+}: {
+  noneText?: boolean;
+  customeClass?: string;
+  iconZize?: number;
+}) {
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,22 +49,25 @@ export default function ShareButton() {
         onClick={handleShare}
         disabled={loading}
         title="Chia sẻ toàn bộ danh sách"
-        className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors cursor-pointer disabled:opacity-50"
+        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border border-zinc-200 text-zinc-600 hover:bg-zinc-50 transition-colors cursor-pointer disabled:opacity-50 ${
+          noneText ? "px-2 py-1" : ""
+        } ${customeClass ?? ""}`}
       >
         {copied ? (
           <>
-            <Check size={13} className="text-emerald-500" />
-            Đã copy link
+            <Check size={iconZize} className="text-emerald-500" />
+
+            {noneText ? "" : "Đã sao chép"}
           </>
         ) : loading ? (
           <>
-            <Share2 size={13} className="animate-pulse" />
-            Đang tạo...
+            <Share2 size={iconZize} className="animate-pulse" />
+            {noneText ? "" : "Đang tạo..."}
           </>
         ) : (
           <>
-            <Share2 size={13} />
-            Chia sẻ
+            <Share2 size={iconZize} />
+            {noneText ? "" : "Chia sẻ"}
           </>
         )}
       </button>

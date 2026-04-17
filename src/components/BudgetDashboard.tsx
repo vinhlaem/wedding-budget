@@ -216,7 +216,7 @@ export default function BudgetDashboard() {
           <div className="flex items-center gap-2">
             <NotificationCenter />
             {/* Share workspace */}
-            <ShareButton />
+
             {/* Refresh — mobile only */}
             <button
               onClick={() => window.location.reload()}
@@ -343,10 +343,9 @@ export default function BudgetDashboard() {
       </aside>
 
       {/* ── Fixed FABs ───────────────────────────────────────────────────── */}
-      {/* Mobile: add button */}
       <button
         onClick={handleAdd}
-        className="fixed bottom-6 right-6 xl:hidden w-14 h-14 bg-zinc-900 text-white rounded-2xl shadow-2xl flex items-center justify-center hover:bg-zinc-800 transition-all hover:scale-105 active:scale-95 cursor-pointer z-20"
+        className="fixed bottom-6 right-6 w-14 h-14 bg-zinc-900 text-white rounded-2xl shadow-2xl flex items-center justify-center hover:bg-zinc-800 transition-all hover:scale-105 active:scale-95 cursor-pointer z-20"
       >
         <Plus size={22} />
       </button>
@@ -355,7 +354,7 @@ export default function BudgetDashboard() {
       <button
         onClick={() => setChartOpen((v) => !v)}
         title="Phân bổ ngân sách"
-        className={`fixed bottom-24 xl:bottom-6 right-6 w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-20 ${
+        className={`fixed bottom-24  right-6 w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer z-20 ${
           chartOpen
             ? "bg-zinc-800 text-white"
             : "bg-white text-zinc-700 border border-zinc-200 hover:border-zinc-300"
@@ -363,6 +362,14 @@ export default function BudgetDashboard() {
       >
         <PieChart size={22} />
       </button>
+
+      <div className="flex fixed  bottom-42 right-6">
+        <ShareButton
+          noneText
+          customeClass="w-14 h-14 bg-white justify-center items-center"
+          iconZize={22}
+        />
+      </div>
 
       {/* Modals */}
       <BudgetModal
