@@ -75,8 +75,12 @@ export default function BudgetDashboard() {
 
     const acceptShare = async () => {
       try {
+        const apiBaseRaw = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000";
+        const apiBase = apiBaseRaw.replace(/\/$/, "");
+        const apiUrl = apiBase.endsWith("/api") ? apiBase : `${apiBase}/api`;
+
         await axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:9000"}/budgets/share/accept`,
+          `${apiUrl}/budgets/share/accept`,
           { token: shareToken },
           {
             headers: {
